@@ -1,0 +1,32 @@
+LOGO! Soft Comfort backup and temp files
+*.bak
+*.~*
+*.tmp
+*.lsc_autosave*
+
+OS-specific
+.DS_Store       # macOS
+Thumbs.db       # Windows
+
+IDE/workspace metadata
+.vscode/
+.idea/
+
+Generated output or temp folders (if used externally)
+build/
+dist/
+output/
+simulations/
+
+Python cache folders (if any scripts used)
+__pycache__/
+*.pyc
+
+Exported/generated binary files
+*.bin
+*.hex
+*.lst
+*.log
+
+Misc
+*~
