@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LOGO_Program>
+  <Header>
+    <Title>Автоматическое освещение гаража</Title>
+    <Author>PLC Laboratory</Author>
+    <Date>2025-06-04</Date>
+    <Version>1.0</Version>
+    <Device>LOGO! 8</Device>
+    <Description>Система автоматического освещения гаража с таймером и аварийным отключением</Description>
+  </Header>
+  
+  <Inputs>
+    <Input>
+      <Address>I1</Address>
+      <Name>Датчик двери гаража</Name>
+      <Description>1 = дверь открыта, 0 = дверь закрыта</Description>
+      <Type>Digital</Type>
+    </Input>
+    <Input>
+      <Address>I2</Address>
+      <Name>Датчик освещенности</Name>
+      <Description>1 = темно, 0 = светло</Description>
+      <Type>Digital</Type>
+    </Input>
+    <Input>
+      <Address>I3</Address>
+      <Name>Кнопка ручного включения</Name>
+      <Description>Нормально разомкнутая кнопка</Description>
+      <Type>Digital</Type>
+    </Input>
+    <Input>
+      <Address>I4</Address>
+      <Name>Кнопка аварийного отключения</Name>
+      <Description>Нормально замкнутая кнопка</Description>
+      <Type>Digital</Type>
+    </Input>
+  </Inputs>
+  
+  <Outputs>
+    <Output>
+      <Address>Q1</Address>
+      <Name>Освещение гаража</Name>
+      <Description>Основное освещение</Description>
+      <Type>Digital</Type>
+    </Output>
+    <Output>
+      <Address>Q2</Address>
+      <Name>Индикатор работы</Name>
+      <Description>Светодиодный индикатор состояния</Description>
+      <Type>Digital</Type>
+    </Output>
+  </Outputs>
+  
+  <Logic_Blocks>
+
+    <Block>
+      <ID>B001</ID>
+      <Type>AND</Type>
+      <Name>Автовключение</Name>
+      <Input1>I1</Input1>
+      <Input2>I2</Input2>
+      <Output>M1</Output>
+    </Block>
+    
+    <Block>
+      <ID>B002</ID>
+      <Type>OR</Type>
+      <Name>Общая логика включения</Name>
+      <Input1>M1</Input1> 
+      <Input2>I3</Input2>
+      <Output>M2</Output> 
+    </Block>
+    
+    <Block>
+      <ID>B003</ID>
+      <Type>AND</Type>
+      <Name>С учетом аварийного отключения</Name>
+      <Input1>M2</Input1> 
+      <Input2>I4</Input2>
+      <Output>M3</Output>
+    </Block>
+    
+    <Block>
+      <ID>B004</ID>
+      <Type>TON</Type>
+      <Name>Таймер задержки 5 минут</Name>
+      <Input>M3</Input>  
+      <Time>300s</Time>  
+      <Output>Q1</Output>
+      <Parameters>
+        <TimeBase>1s</TimeBase>
+        <Preset>300</Preset>
+        <RetentiveTimer>false</RetentiveTimer>
+      </Parameters>
+    </Block>
+    
+    <Block>
+      <ID>B005</ID>
+      <Type>DIRECT</Type>
+      <Name>Индикатор</Name>
+      <Input>Q1</Input> 
+      <Output>Q2</Output> 
+    </Block>
+  </Logic_Blocks>
+  
+  <Memory_Markers>
+    <Marker>
+      <Address>M1</Address>
+      <Name>Автовключение по датчикам</Name>
+      <Description>Результат AND для двери и освещенности</Description>
+    </Marker>
+    <Marker>
+      <Address>M2</Address>
+      <Name>Общий сигнал включения</Name>
+      <Description>Результат OR для авто и ручного включения</Description>
+    </Marker>
+    <Marker>
+      <Address>M3</Address>
+      <Name>Финальный сигнал</Name>
+      <Description>С учетом аварийного отключения</Description>
+    </Marker>
+  </Memory_Markers>
+  
+  <Function_Plan>
+    <Network Number="1">
+      <Comment>Автоматическое включение при открытии двери в темноте</Comment>
+      <Elements>
+        <Contact Type="NO" Address="I1" X="1" Y="1"/>
+        <Contact Type="NO" Address="I2" X="2" Y="1"/>
+        <AndGate X="3" Y="1" Output="M1"/>
+      </Elements>
+    </Network>
+    
+    <Network Number="2">
+      <Comment>Объединение с ручным включением</Comment>
+      <Elements>
+        <Contact Type="NO" Address="M1" X="1" Y="1"/>
+        <Contact Type="NO" Address="I3" X="1" Y="2"/>
+        <OrGate X="2" Y="1" Output="M2"/>
+      </Elements>
+    </Network>
+    
+    <Network Number="3">
+      <Comment>Учет аварийного отключения</Comment>
+      <Elements>
+        <Contact Type="NO" Address="M2" X="1" Y="1"/>
+        <Contact Type="NC" Address="I4" X="2" Y="1"/>
+        <AndGate X="3" Y="1" Output="M3"/>
+      </Elements>
+    </Network>
+    
+    <Network Number="4">
+      <Comment>Таймер задержки выключения 5 минут</Comment>
+      <Elements>
+        <Contact Type="NO" Address="M3" X="1" Y="1"/>
+        <Timer Type="TON" Preset="300s" X="2" Y="1" Output="Q1"/>
+      </Elements>
+    </Network>
+    
+    <Network Number="5">
+      <Comment>Индикатор работы системы</Comment>
+      <Elements>
+        <Contact Type="NO" Address="Q1" X="1" Y="1"/>
+        <Coil Address="Q2" X="2" Y="1"/>
+      </Elements>
+    </Network>
+  </Function_Plan>
+  
+  <Ladder_Diagram>
+    <Rung Number="1">
+      <Comment>Автоматическое включение: дверь открыта И темно</Comment>
+      <Logic>
+        |--[I1]----[I2]----(M1)--|
+      </Logic>
+    </Rung>
+    
+    <Rung Number="2">
+      <Comment>Общая логика: автоматическое ИЛИ ручное включение</Comment>
+      <Logic>
+        |--[M1]------------------|
+        |                        |---(M2)--|
+        |--[I3]------------------|
+      </Logic>
+    </Rung>
+    
+    <Rung Number="3">
+      <Comment>С учетом аварийного отключения (НЗ контакт)</Comment>
+      <Logic>
+        |--[M2]----[/I4]----(M3)--|
+      </Logic>
+    </Rung>
+    
+    <Rung Number="4">
+      <Comment>Таймер задержки 5 минут</Comment>
+      <Logic>
+        |--[M3]----[TON_300s]----(Q1)--|
+      </Logic>
+    </Rung>
+    
+    <Rung Number="5">
+      <Comment>Индикатор работы</Comment>
+      <Logic>
+        |--[Q1]----(Q2)--|
+      </Logic>
+    </Rung>
+  </Ladder_Diagram>
+  
+  <Test_Cases>
+    <Test Name="Тест 1: Автоматическое включение">
+      <Description>Проверка включения при открытии двери в темноте</Description>
+      <Inputs>
+        <I1>1</I1>
+        <I2>1</I2>
+        <I3>0</I3> 
+        <I4>1</I4> 
+      </Inputs>
+      <Expected_Outputs>
+        <Q1>1</Q1> 
+        <Q2>1</Q2> 
+      </Expected_Outputs>
+    </Test>
+    
+    <Test Name="Тест 2: Выключение днем">
+      <Description>Свет не должен включаться днем при открытии двери</Description>
+      <Inputs>
+        <I1>1</I1>
+        <I2>0</I2> 
+        <I3>0</I3>
+        <I4>1</I4> 
+      </Inputs>
+      <Expected_Outputs>
+        <Q1>0</Q1>
+        <Q2>0</Q2>
+      </Expected_Outputs>
+    </Test>
+    
+    <Test Name="Тест 3: Ручное включение">
+      <Description>Принудительное включение кнопкой</Description>
+      <Inputs>
+        <I1>0</I1> 
+        <I2>0</I2> 
+        <I3>1</I3> 
+        <I4>1</I4> 
+      </Inputs>
+      <Expected_Outputs>
+        <Q1>1</Q1>
+        <Q2>1</Q2> 
+      </Expected_Outputs>
+    </Test>
+    
+    <Test Name="Тест 4: Аварийное отключение">
+      <Description>Аварийное отключение должно блокировать все</Description>
+      <Inputs>
+        <I1>1</I1>
+        <I2>1</I2>
+        <I3>1</I3> 
+        <I4>0</I4> 
+      </Inputs>
+      <Expected_Outputs>
+        <Q1>0</Q1>
+        <Q2>0</Q2>
+      </Expected_Outputs>
+    </Test>
+  </Test_Cases>
+  
+  <Documentation>
+    <Installation_Notes>
+      1. Подключить датчик двери к входу I1
+      2. Подключить датчик освещенности к входу I2  
+      3. Подключить кнопку ручного включения к входу I3
+      4. Подключить кнопку аварийного отключения к входу I4 (НЗ контакт)
+      5. Подключить освещение к выходу Q1
+      6. Подключить индикатор к выходу Q2
+    </Installation_Notes>
+    
+    <Commissioning_Steps>
+      1. Загрузить программу в ПЛК LOGO
+      2. Проверить все входные сигналы в режиме мониторинга
+      3. Протестировать каждый сценарий работы
+      4. Настроить время таймера при необходимости
+      5. Документировать настройки и результаты тестов
+    </Commissioning_Steps>
+  </Documentation>
+</LOGO_Program>
