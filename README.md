@@ -31,9 +31,3 @@ Test cases for 4 scenarios:
 - Manual on
 - Daylight behavior
 - Emergency shutdown
-
-Installation
-Wiring and programming instructions in [`/docs/installation.md`](docs/installation.md)
-
-License
-MIT License (or your preferred license)
